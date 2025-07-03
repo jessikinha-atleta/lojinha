@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brechó da Jeh</title>
+    <link rel="icon" href="https://github.com/jessikinha-atleta/minhasrifas/raw/main/faviconjeh.png" type="image/png">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            transition: transform 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-title {
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+        }
+        
+        .product-price {
+            color: #e91e63;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 10px 0;
+        }
+        
+        .product-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        
+        .status-available {
+            background-color: #4CAF50;
+        }
+        
+        .status-reserved {
+            background-color: #FF9800;
+        }
+        
+        .status-sold {
+            background-color: #000000;
+        }
+        
+        .product-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-details {
+            background-color: #2196F3;
+        }
+        
+        .btn-reserve {
+            background-color: #4CAF50;
+        }
+        
+        .btn-reserved {
+            background-color: #9E9E9E;
+            cursor: not-allowed;
+        }
+        
+        .btn-sold {
+            background-color: #000000;
+            cursor: not-allowed;
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        
+        .btn-primary {
+            background-color: #2196F3;
+        }
+        
+        .login-btn {
+            background-color: #4CAF50;
+        }
+        
+        .logout-btn {
+            background-color: #F44336;
+        }
+        
+        .admin-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9e9e9;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 5px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .product-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .gallery-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input, 
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .form-group textarea {
+            height: 100px;
+        }
+        
+        .loading-spinner {
+            display: none;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Brechó da Jeh</h1>
+    <p style="text-align: center;">Roupas novas e usadas com ótimos preços!</p>
+    
+    <div class="action-buttons">
+        <button id="login-btn" class="btn login-btn">Login Admin</button>
+    </div>
+    
+    <div class="products-grid" id="products-container">
+        <!-- Produtos serão carregados dinamicamente -->
+    </div>
+    
+    <div class="admin-panel" id="admin-panel">
+        <h2>Painel Administrativo</h2>
+        <button id="add-product-btn" class="btn btn-primary">Adicionar Produto</button>
+        <button id="logout-btn" class="btn logout-btn">Logout</button>
+    </div>
+    
+    <!-- Modal de detalhes do produto -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-product-title"></h2>
+            <div class="product-gallery" id="product-gallery">
+                <!-- Imagens serão carregadas dinamicamente -->
+            </div>
+            <p id="modal-product-price" style="font-size: 1.5rem; color: #e91e63; font-weight: bold;"></p>
+            <p id="modal-product-description" style="white-space: pre-line;"></p>
+            <button id="reserve-btn" class="btn btn-reserve">Reservar Produto</button>
+            <div class="loading-spinner" id="reserve-spinner"></div>
+        </div>
+    </div>
+    
+    <!-- Modal de adição/edição de produto -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="admin-modal-title">Adicionar Novo Produto</h2>
+            <div class="form-group">
+                <label for="product-name">Nome do Produto:</label>
+                <input type="text" id="product-name" required>
+            </div>
+            <div class="form-group">
+                <label for="product-price">Preço (R$):</label>
+                <input type="number" id="product-price" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="product-status">Status:</label>
+                <select id="product-status">
+                    <option value="available">Disponível</option>
+                    <option value="reserved">Reservado</option>
+                    <option value="sold">Vendido</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="product-description">Descrição:</label>
+                <textarea id="product-description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="product-images">URLs das Imagens (separadas por vírgula):</label>
+                <textarea id="product-images" required></textarea>
+            </div>
+            <div class="loading-spinner" id="admin-spinner"></div>
+            <button id="save-product-btn" class="btn btn-primary">Salvar Produto</button>
+            <button id="delete-product-btn" class="btn btn-danger" style="display: none;">Excluir Produto</button>
+        </div>
+    </div>
+    
+    <!-- Modal de login -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login Administrativo</h2>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button id="confirm-login-btn" class="btn btn-primary">Login</button>
+            <p id="login-error" style="color: red; display: none;">Email ou senha incorretos.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Configuração do Firebase (mesma do seu projeto de rifas)
+        const firebaseConfig = {
+            apiKey: "AIzaSyClzqFmEL9y_ugHnC7V4DnFiANX6RLDYzc",
+            authDomain: "teste-c702e.firebaseapp.com",
+            databaseURL: "https://teste-c702e-default-rtdb.firebaseio.com",
+            projectId: "teste-c702e",
+            storageBucket: "teste-c702e.appspot.com",
+            messagingSenderId: "478905955045",
+            appId: "1:478905955045:web:3ba118957038593fe85a0c"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        // Variáveis globais
+        let isAdmin = false;
+        let currentProductId = null;
+        
+        // Elementos do DOM
+        const productsContainer = document.getElementById('products-container');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const adminPanel = document.getElementById('admin-panel');
+        const addProductBtn = document.getElementById('add-product-btn');
+        const productModal = document.getElementById('product-modal');
+        const adminModal = document.getElementById('admin-modal');
+        const loginModal = document.getElementById('login-modal');
+        const closeButtons = document.getElementsByClassName('close');
+        const modalProductTitle = document.getElementById('modal-product-title');
+        const modalProductPrice = document.getElementById('modal-product-price');
+        const modalProductDescription = document.getElementById('modal-product-description');
+        const productGallery = document.getElementById('product-gallery');
+        const reserveBtn = document.getElementById('reserve-btn');
+        const reserveSpinner = document.getElementById('reserve-spinner');
+        const productNameInput = document.getElementById('product-name');
+        const productPriceInput = document.getElementById('product-price');
+        const productStatusInput = document.getElementById('product-status');
+        const productDescriptionInput = document.getElementById('product-description');
+        const productImagesInput = document.getElementById('product-images');
+        const saveProductBtn = document.getElementById('save-product-btn');
+        const deleteProductBtn = document.getElementById('delete-product-btn');
+        const adminSpinner = document.getElementById('admin-spinner');
+        const confirmLoginBtn = document.getElementById('confirm-login-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginError = document.getElementById('login-error');
+        const adminModalTitle = document.getElementById('admin-modal-title');
+        
+        // Inicializar a aplicação
+        function initApp() {
+            // Verificar estado de autenticação
+            auth.onAuthStateChanged(user => {
+                if (user && user.email === "bioranss@gmail.com") {
+                    isAdmin = true;
+                    adminPanel.style.display = 'block';
+                    loginBtn.textContent = 'Admin Logado';
+                    loginBtn.disabled = true;
+                    loadProducts();
+                } else {
+                    isAdmin = false;
+                    adminPanel.style.display = 'none';
+                    loginBtn.textContent = 'Login Admin';
+                    loginBtn.disabled = false;
+                    loadProducts();
+                }
+            });
+            
+            // Carregar produtos em tempo real
+            database.ref('products').on('value', snapshot => {
+                if (snapshot.exists()) {
+                    renderProducts(snapshot.val());
+                }
+            });
+            
+            // Event listeners
+            loginBtn.addEventListener('click', openLoginModal);
+            logoutBtn.addEventListener('click', logoutAdmin);
+            addProductBtn.addEventListener('click', () => {
+                currentProductId = null;
+                adminModalTitle.textContent = 'Adicionar Novo Produto';
+                productNameInput.value = '';
+                productPriceInput.value = '';
+                productStatusInput.value = 'available';
+                productDescriptionInput.value = '';
+                productImagesInput.value = '';
+                deleteProductBtn.style.display = 'none';
+                adminModal.style.display = 'block';
+            });
+            
+            reserveBtn.addEventListener('click', reserveProduct);
+            saveProductBtn.addEventListener('click', saveProduct);
+            deleteProductBtn.addEventListener('click', deleteProduct);
+            confirmLoginBtn.addEventListener('click', loginAdmin);
+            
+            // Fechar modais ao clicar no X
+            for (let i = 0; i < closeButtons.length; i++) {
+                closeButtons[i].addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            }
+            
+            // Fechar modais ao clicar fora
+            window.addEventListener('click', function(event) {
+                if (event.target.className === 'modal') {
+                    event.target.style.display = 'none';
+                }
+            });
+        }
+        
+        // Carregar produtos
+        function loadProducts() {
+            database.ref('products').once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    renderProducts(snapshot.val());
+                }
+            });
+        }
+        
+        // Renderizar produtos
+        function renderProducts(products) {
+            productsContainer.innerHTML = '';
+            
+            for (const productId in products) {
+                const product = products[productId];
+                const mainImage = product.images.split(',')[0].trim();
+                const statusText = getStatusText(product.status);
+                const statusClass = `status-${product.status}`;
+                
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.innerHTML = `
+                    <img src="${mainImage}" alt="${product.name}" class="product-image">
+                    <div class="product-status ${statusClass}">${statusText}</div>
+                    <div class="product-info">
+                        <h3 class="product-title">${product.name}</h3>
+                        <div class="product-price">R$ ${parseFloat(product.price).toFixed(2)}</div>
+                        <button class="product-btn btn-details" data-id="${productId}">Ver Detalhes</button>
+                    </div>
+                `;
+                
+                productsContainer.appendChild(productCard);
+            }
+            
+            // Adicionar event listeners aos botões de detalhes
+            document.querySelectorAll('.btn-details').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-id');
+                    showProductDetails(productId, products[productId]);
+                });
+            });
+            
+            // Se for admin, adicionar botões de edição
+            if (isAdmin) {
+                document.querySelectorAll('.product-card').forEach(card => {
+                    const productId = card.querySelector('.btn-details').getAttribute('data-id');
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'product-btn btn-primary';
+                    editBtn.textContent = 'Editar';
+                    editBtn.style.marginTop = '5px';
+                    editBtn.addEventListener('click', () => {
+                        editProduct(productId, products[productId]);
+                    });
+                    card.querySelector('.product-info').appendChild(editBtn);
+                });
+            }
+        }
+        
+        // Mostrar detalhes do produto
+        function showProductDetails(productId, product) {
+            currentProductId = productId;
+            modalProductTitle.textContent = product.name;
+            modalProductPrice.textContent = `R$ ${parseFloat(product.price).toFixed(2)}`;
+            modalProductDescription.textContent = product.description;
+            
+            // Limpar galeria e adicionar imagens
+            productGallery.innerHTML = '';
+            product.images.split(',').forEach(imageUrl => {
+                const img = document.createElement('img');
+                img.src = imageUrl.trim();
+                img.className = 'gallery-image';
+                img.onclick = () => window.open(imageUrl.trim(), '_blank');
+                productGallery.appendChild(img);
+            });
+            
+            // Configurar botão de reserva
+            reserveBtn.className = 'btn';
+            reserveBtn.disabled = false;
+            
+            if (product.status === 'available') {
+                reserveBtn.className = 'btn btn-reserve';
+                reserveBtn.textContent = 'Reservar Produto';
+            } else if (product.status === 'reserved') {
+                reserveBtn.className = 'btn btn-reserved';
+                reserveBtn.textContent = 'Produto Reservado';
+                reserveBtn.disabled = true;
+            } else if (product.status === 'sold') {
+                reserveBtn.className = 'btn btn-sold';
+                reserveBtn.textContent = 'Produto Vendido';
+                reserveBtn.disabled = true;
+            }
+            
+            productModal.style.display = 'block';
+        }
+        
+        // Reservar produto
+        function reserveProduct() {
+            const productRef = database.ref(`products/${currentProductId}`);
+            
+            reserveSpinner.style.display = 'block';
+            reserveBtn.disabled = true;
+            
+            // Usar transação para garantir que o produto ainda está disponível
+            productRef.transaction(product => {
+                if (product && product.status === 'available') {
+                    product.status = 'reserved';
+                    return product;
+                }
+                return;
+            }).then(result => {
+                reserveSpinner.style.display = 'none';
+                
+                if (result.committed) {
+                    const product = result.snapshot.val();
+                    const message = `Olá, gostaria de reservar o produto ${product.name}. Como faço para concluir a compra?`;
+                    window.open(`https://wa.me/5512997473756?text=${encodeURIComponent(message)}`, '_blank');
+                    
+                    // Atualizar UI
+                    reserveBtn.className = 'btn btn-reserved';
+                    reserveBtn.textContent = 'Produto Reservado';
+                    reserveBtn.disabled = true;
+                    
+                    // Atualizar status no modal
+                    const statusElement = document.querySelector(`.product-card [data-id="${currentProductId}"]`).closest('.product-card').querySelector('.product-status');
+                    statusElement.textContent = 'Reservado';
+                    statusElement.className = 'product-status status-reserved';
+                } else {
+                    alert('Este produto já foi reservado ou vendido por outra pessoa.');
+                    productModal.style.display = 'none';
+                }
+            }).catch(error => {
+                reserveSpinner.style.display = 'none';
+                reserveBtn.disabled = false;
+                console.error('Erro ao reservar produto:', error);
+                alert('Ocorreu um erro ao reservar o produto. Por favor, tente novamente.');
+            });
+        }
+        
+        // Editar produto
+        function editProduct(productId, product) {
+            currentProductId = productId;
+            adminModalTitle.textContent = 'Editar Produto';
+            productNameInput.value = product.name;
+            productPriceInput.value = product.price;
+            productStatusInput.value = product.status;
+            productDescriptionInput.value = product.description;
+            productImagesInput.value = product.images;
+            deleteProductBtn.style.display = 'inline-block';
+            adminModal.style.display = 'block';
+        }
+        
+        // Salvar produto
+        function saveProduct() {
+            const name = productNameInput.value.trim();
+            const price = productPriceInput.value.trim();
+            const status = productStatusInput.value;
+            const description = productDescriptionInput.value.trim();
+            const images = productImagesInput.value.trim();
+            
+            if (!name || !price || !description || !images) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const productData = {
+                name,
+                price: parseFloat(price).toFixed(2),
+                status,
+                description,
+                images
+            };
+            
+            adminSpinner.style.display = 'block';
+            saveProductBtn.disabled = true;
+            
+            if (currentProductId) {
+                // Editar produto existente
+                database.ref(`products/${currentProductId}`).set(productData)
+                    .then(() => {
+                        adminModal.style.display = 'none';
+                        adminSpinner.style.display = 'none';
+                        saveProductBtn.disabled = false;
+                        alert('Produto atualizado com sucesso!');
+                    })
+                    .catch(error => {
+                        adminSpinner.style.display = 'none';
+                        saveProductBtn.disabled = false;
+                        console.error('Erro ao atualizar produto:', error);
+                        alert('Ocorreu um erro ao atualizar o produto.');
+                    });
+            } else {
+                // Adicionar novo produto
+                database.ref('products').push(productData)
+                    .then(() => {
+                        adminModal.style.display = 'none';
+                        adminSpinner.style.display = 'none';
+                        saveProductBtn.disabled = false;
+                        alert('Produto adicionado com sucesso!');
+                    })
+                    .catch(error => {
+                        adminSpinner.style.display = 'none';
+                        saveProductBtn.disabled = false;
+                        console.error('Erro ao adicionar produto:', error);
+                        alert('Ocorreu um erro ao adicionar o produto.');
+                    });
+            }
+        }
+        
+        // Excluir produto
+        function deleteProduct() {
+            if (confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
+                adminSpinner.style.display = 'block';
+                deleteProductBtn.disabled = true;
+                
+                database.ref(`products/${currentProductId}`).remove()
+                    .then(() => {
+                        adminModal.style.display = 'none';
+                        adminSpinner.style.display = 'none';
+                        deleteProductBtn.disabled = false;
+                        alert('Produto excluído com sucesso!');
+                    })
+                    .catch(error => {
+                        adminSpinner.style.display = 'none';
+                        deleteProductBtn.disabled = false;
+                        console.error('Erro ao excluir produto:', error);
+                        alert('Ocorreu um erro ao excluir o produto.');
+                    });
+            }
+        }
+        
+        // Abrir modal de login
+        function openLoginModal() {
+            loginModal.style.display = 'block';
+            loginError.style.display = 'none';
+            emailInput.value = '';
+            passwordInput.value = '';
+        }
+        
+        // Login do administrador
+        function loginAdmin() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!email || !password) {
+                loginError.style.display = 'block';
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    if (userCredential.user.email === "bioranss@gmail.com") {
+                        loginModal.style.display = 'none';
+                        isAdmin = true;
+                        adminPanel.style.display = 'block';
+                        loginBtn.textContent = 'Admin Logado';
+                        loginBtn.disabled = true;
+                        loadProducts();
+                    } else {
+                        throw new Error('Acesso não autorizado');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro no login:', error);
+                    loginError.style.display = 'block';
+                });
+        }
+        
+        // Logout do administrador
+        function logoutAdmin() {
+            auth.signOut()
+                .then(() => {
+                    isAdmin = false;
+                    adminPanel.style.display = 'none';
+                    loginBtn.textContent = 'Login Admin';
+                    loginBtn.disabled = false;
+                    loadProducts();
+                })
+                .catch(error => {
+                    console.error('Erro no logout:', error);
+                });
+        }
+        
+        // Obter texto do status
+        function getStatusText(status) {
+            const statusMap = {
+                'available': 'Disponível',
+                'reserved': 'Reservado',
+                'sold': 'Vendido'
+            };
+            return statusMap[status] || status;
+        }
+        
+        // Iniciar aplicação
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
