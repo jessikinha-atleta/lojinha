@@ -242,15 +242,33 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Novo estilo para o botão de login no rodapé */
+        .footer-login {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px 0;
+        }
+        
+        .footer-login-btn {
+            background-color: transparent;
+            color: #888;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .footer-login-btn:hover {
+            background-color: #f0f0f0;
+            color: #555;
+        }
     </style>
 </head>
 <body>
     <h1>Brechó da Jeh</h1>
     <p style="text-align: center;">Roupas novas e usadas com ótimos preços!</p>
-    
-    <div class="action-buttons">
-        <button id="login-btn" class="btn login-btn">Login Admin</button>
-    </div>
     
     <div class="products-grid" id="products-container">
         <!-- Produtos serão carregados dinamicamente -->
@@ -260,6 +278,11 @@
         <h2>Painel Administrativo</h2>
         <button id="add-product-btn" class="btn btn-primary">Adicionar Produto</button>
         <button id="logout-btn" class="btn logout-btn">Logout</button>
+    </div>
+    
+    <!-- Botão de login movido para o rodapé -->
+    <div class="footer-login">
+        <button id="login-btn" class="footer-login-btn">Login Admin</button>
     </div>
     
     <!-- Modal de detalhes do produto -->
@@ -390,12 +413,14 @@
                     adminPanel.style.display = 'block';
                     loginBtn.textContent = 'Admin Logado';
                     loginBtn.disabled = true;
+                    loginBtn.classList.add('footer-login-btn-active');
                     loadProducts();
                 } else {
                     isAdmin = false;
                     adminPanel.style.display = 'none';
                     loginBtn.textContent = 'Login Admin';
                     loginBtn.disabled = false;
+                    loginBtn.classList.remove('footer-login-btn-active');
                     loadProducts();
                 }
             });
@@ -698,6 +723,7 @@
                         adminPanel.style.display = 'block';
                         loginBtn.textContent = 'Admin Logado';
                         loginBtn.disabled = true;
+                        loginBtn.classList.add('footer-login-btn-active');
                         loadProducts();
                     } else {
                         throw new Error('Acesso não autorizado');
@@ -717,6 +743,7 @@
                     adminPanel.style.display = 'none';
                     loginBtn.textContent = 'Login Admin';
                     loginBtn.disabled = false;
+                    loginBtn.classList.remove('footer-login-btn-active');
                     loadProducts();
                 })
                 .catch(error => {
