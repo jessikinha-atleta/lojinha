@@ -480,8 +480,10 @@
         function renderProducts(products) {
             productsContainer.innerHTML = '';
             
-            for (const productId in products) {
-                const product = products[productId];
+            // Converter objeto em array e inverter a ordem para mostrar os mais recentes primeiro
+            const productsArray = Object.entries(products).reverse();
+            
+            for (const [productId, product] of productsArray) {
                 const mainImage = product.images.split(',')[0].trim();
                 const statusText = getStatusText(product.status);
                 const statusClass = `status-${product.status}`;
@@ -658,8 +660,9 @@
                         alert('Ocorreu um erro ao atualizar o produto.');
                     });
             } else {
-                // Adicionar novo produto
-                database.ref('products').push(productData)
+                // Adicionar novo produto no topo da lista
+                const newProductRef = database.ref('products').push();
+                newProductRef.set(productData)
                     .then(() => {
                         adminModal.style.display = 'none';
                         adminSpinner.style.display = 'none';
